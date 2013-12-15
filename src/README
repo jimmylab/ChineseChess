@@ -1,0 +1,4 @@
+compile it: javac ChineseChess.java
+run it: java ChineseChess
+
+-by Shunquan Tan
