@@ -167,11 +167,11 @@ public class Game
     switch (pieceAtCoord(coord))
       {
       case 'K':case 'k': return Jiang.possibleDestinations(board, coord, checkCheck);
-      case 'A':case 'a': 
-      case 'H':case 'h': 
-      case 'C':case 'c': 
-      case 'R':case 'r': 
-      case 'E':case 'e': 
+      case 'A':case 'a': return Shi.possibleDestinations(board,coord,checkCheck);
+      case 'H':case 'h': return Ma.possibleDestinations(board,coord,checkCheck);
+      case 'C':case 'c': return Pao.possibleDestinations(board,coord,checkCheck);
+      case 'R':case 'r': return Che.possibleDestinations(board,coord,checkCheck);
+      case 'E':case 'e': return Xiang.possibleDestinations(board,coord,checkCheck);
       case 'P':case 'p': return Zu.possibleDestinations(board, coord, checkCheck);
       default:
         return new Vector();
@@ -230,10 +230,21 @@ public class Game
                   v =  Jiang.possibleDestinations(board, coord, checkCheck);
                   break;
                 case 'A':case 'a':
+                 v =  Shi.possibleDestinations(board, coord, checkCheck);
+                  break;
                 case 'H':case 'h': 
+                  v =  Ma.possibleDestinations(board, coord, checkCheck);
+                  break;
                 case 'C':case 'c': 
+                  v =  Pao.possibleDestinations(board, coord, checkCheck);
+                  break;
+                  
                 case 'R':case 'r': 
+                 v =  Che.possibleDestinations(board, coord, checkCheck);
+                 break;
                 case 'E':case 'e': 
+                  v =  Xiang.possibleDestinations(board, coord, checkCheck);
+                  break;
                 case 'P':case 'p': 
                   v =  Zu.possibleDestinations(board, coord, checkCheck);
                   break;
@@ -286,10 +297,21 @@ public class Game
                     possible = Jiang.possibleDestinations(board, new SquareCoord(i,j), false);
                     break;
                   case 'R':case 'r':
+                    possible = Che.possibleDestinations(board, new SquareCoord(i,j), false);
+                    break;
                   case 'H':case 'h':
+                     possible = Ma.possibleDestinations(board, new SquareCoord(i,j), false);
+                     break;
                   case 'E':case 'e':
+                     possible = Xiang.possibleDestinations(board, new SquareCoord(i,j), false);
+                     break;
+
                   case 'A':case 'a':
+                     possible = Shi.possibleDestinations(board, new SquareCoord(i,j), false);
+                     break;
                   case 'C':case 'c':
+                     possible = Pao.possibleDestinations(board, new SquareCoord(i,j), false);
+                     break;
                   case 'P':case 'p':
                     possible = Zu.possibleDestinations(board, new SquareCoord(i,j), false);
                     break;
