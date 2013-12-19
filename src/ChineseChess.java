@@ -11,6 +11,7 @@ public class ChineseChess
   private ChineseChess()
   {
     mainFrame = new JFrame("Chinese Chess");
+    mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     control = new ChineseChessCtrl(mainFrame);
     JMenuBar menuBar = new JMenuBar();
     JMenu menu = new JMenu("File");
@@ -65,7 +66,7 @@ class ChineseChessCtrl extends WindowAdapter implements ActionListener
 {
   JFrame mainFrame;
   public ChineseChessCtrl(JFrame frame) { mainFrame = frame; }
-  public void actionPerformed(ActionEvent event)
+  @Override public void actionPerformed(ActionEvent event)
   {
     if (event.getActionCommand().compareTo("NEW") == 0)
       {
@@ -73,7 +74,21 @@ class ChineseChessCtrl extends WindowAdapter implements ActionListener
         BoardView.defaultBoardView().setGame(game);
         BoardView.defaultBoardView().setColor('r');
       }
-    if (event.getActionCommand().compareTo("EXIT") == 0)
-      System.exit(0);
+    if (event.getActionCommand().compareTo("EXIT") == 0) {
+        WindowEvent e = new WindowEvent(mainFrame, WindowEvent.WINDOW_CLOSING);
+        windowClosing(e);
+    }
   }
+  @Override public void windowClosing(WindowEvent event) {
+        if (event.getID() == WindowEvent.WINDOW_CLOSING) {
+            //处理Jframe关闭事件
+            int choice = JOptionPane.showConfirmDialog(mainFrame, 
+              "Exit Confirm", "Really Exit?", 
+              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if ( choice == 0 ) System.exit(0);
+        }else{
+            //忽略其他事件，交给JFrame处理
+            super.windowClosing(event);
+        }
+    }
 }
