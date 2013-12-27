@@ -3,204 +3,185 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * AsyncCallÀà
- * Òì²½Ö´ĞĞÓë»Øµ÷
+ * AsyncCallç±»
+ * å¼‚æ­¥æ‰§è¡Œä¸å›è°ƒ
  * @author JimmyLiu
  * @version 1.1.2
  * 
- * ÓÃ·¨£º
- *     ±ÈÈçÕı³£µÄµ÷ÓÃ·½Ê½Îª
+ * ç”¨æ³•ï¼š
+ *     æ¯”å¦‚æ­£å¸¸çš„è°ƒç”¨æ–¹å¼ä¸º
  *     try {
- *	        obj.doSomeThing("param1", "param2");
- *	    } catch ( Throwable e ) {
- *	        obj.errorHandler(e);
- *	    }
- *	    obj.Success("param1", "param2");
- *	    
- *     ÄÇÃ´Òì²½¾ÍÓ¦¸ÃÊÇÕâÑù£º
- *     AsyncCall caller = new AsyncCall( obj, "doSomeThing", "param1", "param2" );    // Ë³ĞòÎª£º¶ÔÏó£¬·½·¨Ãû£¬²ÎÊıÁĞ±í
+ *         obj.doSomeThing("param1", "param2");
+ *     } catch ( Throwable e ) {
+ *         obj.errorHandler(e);
+ *     }
+ *     obj.Success("param1", "param2");
+ * 
+ *     é‚£ä¹ˆå¼‚æ­¥å°±åº”è¯¥æ˜¯è¿™æ ·ï¼š
+ *     AsyncCall caller = new AsyncCall( obj, "doSomeThing", "param1", "param2" );    // é¡ºåºä¸ºï¼šå¯¹è±¡ï¼Œæ–¹æ³•åï¼Œå‚æ•°åˆ—è¡¨
  *     caller.onError( obj, "errorHandler" );
  *     caller.onSuccess( obj, "obj.Success", "param1", "param2" );
  *     caller.call();
  * 
- * ×¢ÒâÊÂÏî£ºÀà±¾ÉíÒ²×÷ÎªÂÖÑ¯Ïß³ÌÊ¹ÓÃ£¬ÍòÍò²»ÒªÊÖ¼úÈ¥µ÷ÓÃrun()·½·¨¡¾ÓĞÒâË¼Âğ¡¿
- * ³ÌĞò£¨Ö÷Ïß³Ì£©ÍË³öÇ°Îñ±ØÓÃ@see AsyncCall#destroy ·½·¨²ÁÆ¨¹É£¡£¨·ñÔòÄã¾Í»á·¢ÏÖ³ÌĞòÓÀÔ¶ÍË²»³öºÇºÇ£©
+ * æ³¨æ„äº‹é¡¹ï¼šç±»æœ¬èº«ä¹Ÿä½œä¸ºè½®è¯¢çº¿ç¨‹ä½¿ç”¨ï¼Œä¸‡ä¸‡ä¸è¦æ‰‹è´±å»è°ƒç”¨run()æ–¹æ³•ã€æœ‰æ„æ€å—ã€‘
+ * ç¨‹åºï¼ˆä¸»çº¿ç¨‹ï¼‰é€€å‡ºå‰åŠ¡å¿…ç”¨@see AsyncCall#destroy æ–¹æ³•æ“¦å±è‚¡ï¼ï¼ˆå¦åˆ™ä½ å°±ä¼šå‘ç°ç¨‹åºæ°¸è¿œé€€ä¸å‡ºå‘µå‘µï¼‰
  */
 @SuppressWarnings (value={"unchecked"})
 public class AsyncCall implements Runnable
 {
-	public static void main(String args[]) {
-		myMethods obj = new myMethods();
-		AsyncCall caller = new AsyncCall( obj, "abc", "123", "456", 789 );
-		//AsyncCall caller = new AsyncCall( obj, "FuckingNoExist", "123", "456", 789 );
-		AsyncCall[] callers = new AsyncCall[10];
-		for ( int i=0; i<5; i++ ) {
-			callers[i] = new AsyncCall( obj, "abc", "123", "456", i+1 );
-			callers[i].onError( obj, "Er" );
-		}
-		for ( int i=0; i<5; i++ ) callers[i].call();
-		//caller.onError( obj, "abc", "987", "654", 0 );
-		//caller.call();
-		for ( int i=0; i<15; i++ ) {
-			System.out.println("Main running!");
-			try{Thread.sleep(700);}catch(InterruptedException e){}
-		}
-		caller.call();
-		AsyncCall.destory();
-	}
-	private static boolean Running = false;    // ÔËĞĞ×´Ì¬
-	private static Thread EventLooper = null;    // ÊÂ¼şÂÖÑ¯Ïß³Ì
-	private static LinkedBlockingDeque<AsyncTask[]> WorkLine = null;    // ÈÎÎñÁ÷Ë®Ïß¶ÓÁĞ
-	private AsyncTask[] task;    // ÈÎÎñÊı×é£¬·½·¨±¾Éí+onSuccess+onError
-	/**
-	 * AsyncCall
-	 * Ä¬ÈÏ¹¹Ôìº¯Êı£¨Ë½ÓĞµÄ£¡Ö»ÄÜÓÃÓÚÄÚ²¿½¨Á¢Ïß³ÌÓÃ£©
-	 */
-	private AsyncCall() {
-		if ( WorkLine ==null )
-			WorkLine = new LinkedBlockingDeque<AsyncTask[]>();    // ³õÊ¼»¯Á÷Ë®Ïß
-		Running = true;
-	}
-	/**
-	 * AsyncCall
-	 * ¹¹Ôìº¯Êı£¨¹«ÓĞ£©£¬Éè¶¨ÒªÒì²½Ö´ĞĞµÄ·½·¨
-	 * @param Object object ÒªÖ´ĞĞµÄ¶ÔÏó
-	 * @param String methodName ÒªÖ´ĞĞµÄ·½·¨Ãû
-	 * @param Object... arguments Òª´«µİµÄ²ÎÊı
-	 */
-	public AsyncCall( Object object, String methodName, Object... arguments ) {
-		task = new AsyncTask[3];
-		task[0] = new AsyncTask( object, methodName, arguments );
-	}
-	/**
-	 * run
-	 * µ±°ÑÀà×÷ÎªÂÖÑ¯Ïß³ÌÊ±£¬²ÅÓÃ´Ërun·½·¨£¬ÇëÎğÖ±½Óµ÷ÓÃ£¡
-	 * @return void
-	 */
-	public void run() {    // µ±°ÑÀà×÷ÎªÂÖÑ¯Ïß³ÌÊ±£¬ÓĞ´Ërun·½·¨
-		AsyncTask[] current = null;
-		while ( Running ) {
-			while ( WorkLine!=null && WorkLine.peek() != null ) {
-				current = WorkLine.remove();
-				try { current[0].Run(); }
-				catch (Throwable e) {
-					try { current[2].Run(e); } catch(Throwable f){}    // Ò»µ©·¢Éú´íÎó£¬µ÷ÓÃÔ¤ÏÈÉè¶¨µÄonError·½·¨£¬²¢½«Òì³£½»¸øµÚÒ»²ÎÊı£¬µ«onError·½·¨ÖĞ×ÔÉíµÄ´íÎó½«±»ºöÂÔ£¬°üÀ¨onError·½·¨Îª¿ÕµÄÇé¿ö
-					continue;    // È»ºóÌø¹ıonSuccess£¬°üÀ¨onSuccess·½·¨Îª¿ÕµÄÇé¿ö
-				}
-				try { current[1].Run(); } catch(Throwable e){}    // onSuccess·½·¨ÖĞ×ÔÉíµÄ´íÎó½«±»ºöÂÔ
-			}
-			try { Thread.sleep(30000); }    // ĞİÏ¢30Ãë£¬ÈÃ³öCPU¿ØÖÆÈ¨
-			catch (InterruptedException e) { continue; }    // ·´Ö®Ôò±»³³ĞÑ£¬¼ÌĞøÂÖÑ¯
-		}
-	}
-	/**
-	 * onSuccess
-	 * Ö¸¶¨Ö´ĞĞ³É¹¦Ê±µÄ»Øµ÷º¯Êı
-	 * @param Object object ÒªÖ´ĞĞµÄ¶ÔÏó
-	 * @param String methodName ÒªÖ´ĞĞµÄ·½·¨Ãû
-	 * @param Object... arguments Òª´«µİµÄ²ÎÊı
-	 * @return void
-	 */
-	public void onSuccess( Object object, String methodName, Object... arguments ) {
-		task[1] = new AsyncTask( object, methodName, arguments );
-	}
-	/**
-	 * onError
-	 * Ö¸¶¨Ö´ĞĞÊ±·¢ÉúÒì³£µÄ»Øµ÷º¯Êı
-	 * @param Object object ÒªÖ´ĞĞµÄ¶ÔÏó
-	 * @param String methodName ÒªÖ´ĞĞµÄ·½·¨Ãû
-	 * @return void
-	 * ×¢Òâ£º´¦Àí´íÎóµÄ·½·¨£¬Ö»ÄÜÓµÓĞÒ»¸öÀàĞÍÎªThrowableµÄ²ÎÊı£¬ÓÃÓÚ½ÓÊÕÒì³£µÄ¾ä±ú
-	 */
-	public void onError( Object object, String methodName ) {
-		Throwable err = new Throwable();
-		task[2] = new AsyncTask( object, methodName, err );
-	}
-	/**
-	 * call
-	 * ¿ªÊ¼Ö´ĞĞÈÎÎñ
-	 * @return void
-	 */
-	public void call() {
-		if ( EventLooper == null ) {    // Èç¹ûÂÖÑ¯Ïß³ÌËÀÍöÌ¬»òÎªnull£¨ÏÂÃæ³Æ½©Ê¬Ì¬^_^£©
-			AsyncCall worker = new AsyncCall();
-			EventLooper = new Thread(worker);
-			EventLooper.start();    // ¿ªÆôĞÂÏß³Ì
-			call();    // ÔÙ´Î³¢ÊÔ»Øµ÷
-		} else {
-			WorkLine.offer(task);    // ·´Ö®½«ÈÎÎñ¼ÓÈë¶ÓÁĞ£¬
-			EventLooper.interrupt();    // ²¢ÊÔÍ¼³³ĞÑÂÖÑ¯Ïß³Ì
-		}
-	}
-	/**
-	 * (static) destory
-	 * Í£Ö¹ÂÖÑ¯Ïß³Ì£¬»ØÊÕÒ»ÇĞÓĞ¹ØAsyncCallµÄ×ÊÔ´
-	 * @return void
-	 */
-	static void destory() {
-		if ( EventLooper != null && EventLooper.isAlive() ) {    // ÈôÏß³Ì²»½©Ê¬¡­¡­
-			EventLooper.interrupt();    // ³³ĞÑÏß³Ì
-			while ( WorkLine.peek() != null ) {    // Ä¬Ä¬µÈ´ıÁ÷Ë®ÏßÍê³É¡­¡­
-				try { Thread.sleep(10); } catch (InterruptedException e){ }    // Ã¿´ÎµÈ´ı10ms
-			}
-			while ( EventLooper.isAlive() ) {    // Ö»ÒªÏß³Ì»¹Ã»Í£
-				Running = false;    // ÖÃÔËĞĞ×´Ì¬ÎªÍ£Ö¹
-				EventLooper.interrupt();    // ÓÖ³³ĞÑ(>_<)
-			}
-			EventLooper = null;
-			WorkLine = null;    // ²ÁÆ¨¹É²Ù×÷
-		}
-	}
+    private static boolean Running = false;    // è¿è¡ŒçŠ¶æ€
+    private static Thread EventLooper = null;    // äº‹ä»¶è½®è¯¢çº¿ç¨‹
+    private static LinkedBlockingDeque<AsyncTask[]> WorkLine = null;    // ä»»åŠ¡æµæ°´çº¿é˜Ÿåˆ—
+    private AsyncTask[] task;    // ä»»åŠ¡æ•°ç»„ï¼Œæ–¹æ³•æœ¬èº«+onSuccess+onError
+    /**
+     * AsyncCall
+     * é»˜è®¤æ„é€ å‡½æ•°ï¼ˆç§æœ‰çš„ï¼åªèƒ½ç”¨äºå†…éƒ¨å»ºç«‹çº¿ç¨‹ç”¨ï¼‰
+     */
+    private AsyncCall() {
+        if ( WorkLine ==null )
+            WorkLine = new LinkedBlockingDeque<AsyncTask[]>();    // åˆå§‹åŒ–æµæ°´çº¿
+        Running = true;
+    }
+    /**
+     * AsyncCall
+     * æ„é€ å‡½æ•°ï¼ˆå…¬æœ‰ï¼‰ï¼Œè®¾å®šè¦å¼‚æ­¥æ‰§è¡Œçš„æ–¹æ³•
+    s * @param Object object è¦æ‰§è¡Œçš„å¯¹è±¡
+     * @param String methodName è¦æ‰§è¡Œçš„æ–¹æ³•å
+     * @param Object... arguments è¦ä¼ é€’çš„å‚æ•°
+     */
+    public AsyncCall( Object object, String methodName, Object... arguments ) {
+        task = new AsyncTask[3];
+        task[0] = new AsyncTask( object, methodName, arguments );
+    }
+    /**
+     * run
+     * å½“æŠŠç±»ä½œä¸ºè½®è¯¢çº¿ç¨‹æ—¶ï¼Œæ‰ç”¨æ­¤runæ–¹æ³•ï¼Œè¯·å‹¿ç›´æ¥è°ƒç”¨ï¼
+     * @return void
+     */
+    public void run() {    // å½“æŠŠç±»ä½œä¸ºè½®è¯¢çº¿ç¨‹æ—¶ï¼Œæœ‰æ­¤runæ–¹æ³•
+        AsyncTask[] current = null;
+        while ( Running ) {
+            while ( WorkLine!=null && WorkLine.peek() != null ) {
+                current = WorkLine.remove();
+                try { current[0].Run(); }
+                catch (Throwable e) {
+                    try { current[2].Run(e); } catch(Throwable f){}    // ä¸€æ—¦å‘ç”Ÿé”™è¯¯ï¼Œè°ƒç”¨é¢„å…ˆè®¾å®šçš„onErroræ–¹æ³•ï¼Œå¹¶å°†å¼‚å¸¸äº¤ç»™ç¬¬ä¸€å‚æ•°ï¼Œä½†onErroræ–¹æ³•ä¸­è‡ªèº«çš„é”™è¯¯å°†è¢«å¿½ç•¥ï¼ŒåŒ…æ‹¬onErroræ–¹æ³•ä¸ºç©ºçš„æƒ…å†µ
+                    continue;    // ç„¶åè·³è¿‡onSuccessï¼ŒåŒ…æ‹¬onSuccessæ–¹æ³•ä¸ºç©ºçš„æƒ…å†µ
+                }
+                try { current[1].Run(); } catch(Throwable e){}    // onSuccessæ–¹æ³•ä¸­è‡ªèº«çš„é”™è¯¯å°†è¢«å¿½ç•¥
+            }
+            try { Thread.sleep(30000); }    // ä¼‘æ¯30ç§’ï¼Œè®©å‡ºCPUæ§åˆ¶æƒ
+            catch (InterruptedException e) { continue; }    // åä¹‹åˆ™è¢«åµé†’ï¼Œç»§ç»­è½®è¯¢
+        }
+    }
+    /**
+     * onSuccess
+     * æŒ‡å®šæ‰§è¡ŒæˆåŠŸæ—¶çš„å›è°ƒå‡½æ•°
+     * @param Object object è¦æ‰§è¡Œçš„å¯¹è±¡
+     * @param String methodName è¦æ‰§è¡Œçš„æ–¹æ³•å
+     * @param Object... arguments è¦ä¼ é€’çš„å‚æ•°
+     * @return void
+     */
+    public void onSuccess( Object object, String methodName, Object... arguments ) {
+        task[1] = new AsyncTask( object, methodName, arguments );
+    }
+    /**
+     * onError
+     * æŒ‡å®šæ‰§è¡Œæ—¶å‘ç”Ÿå¼‚å¸¸çš„å›è°ƒå‡½æ•°
+     * @param Object object è¦æ‰§è¡Œçš„å¯¹è±¡
+     * @param String methodName è¦æ‰§è¡Œçš„æ–¹æ³•å
+     * @return void
+     * æ³¨æ„ï¼šå¤„ç†é”™è¯¯çš„æ–¹æ³•ï¼Œåªèƒ½æ‹¥æœ‰ä¸€ä¸ªç±»å‹ä¸ºThrowableçš„å‚æ•°ï¼Œç”¨äºæ¥æ”¶å¼‚å¸¸çš„å¥æŸ„
+     */
+    public void onError( Object object, String methodName ) {
+        Throwable err = new Throwable();
+        task[2] = new AsyncTask( object, methodName, err );
+    }
+    /**
+     * call
+     * å¼€å§‹æ‰§è¡Œä»»åŠ¡
+     * @return void
+     */
+    public void call() {
+        if ( EventLooper == null ) {    // å¦‚æœè½®è¯¢çº¿ç¨‹æ­»äº¡æ€æˆ–ä¸ºnullï¼ˆä¸‹é¢ç§°åƒµå°¸æ€^_^ï¼‰
+            AsyncCall worker = new AsyncCall();
+            EventLooper = new Thread(worker);
+            EventLooper.start();    // å¼€å¯æ–°çº¿ç¨‹
+            call();    // å†æ¬¡å°è¯•å›è°ƒ
+        } else {
+            WorkLine.offer(task);    // åä¹‹å°†ä»»åŠ¡åŠ å…¥é˜Ÿåˆ—ï¼Œ
+            EventLooper.interrupt();    // å¹¶è¯•å›¾åµé†’è½®è¯¢çº¿ç¨‹
+        }
+    }
+    /**
+     * (static) destory
+     * åœæ­¢è½®è¯¢çº¿ç¨‹ï¼Œå›æ”¶ä¸€åˆ‡æœ‰å…³AsyncCallçš„èµ„æº
+     * @return void
+     */
+    static void destory() {
+        if ( EventLooper != null && EventLooper.isAlive() ) {    // è‹¥çº¿ç¨‹ä¸åƒµå°¸â€¦â€¦
+            EventLooper.interrupt();    // åµé†’çº¿ç¨‹
+            while ( WorkLine.peek() != null ) {    // é»˜é»˜ç­‰å¾…æµæ°´çº¿å®Œæˆâ€¦â€¦
+                try { Thread.sleep(10); } catch (InterruptedException e){ }    // æ¯æ¬¡ç­‰å¾…10ms
+            }
+            while ( EventLooper.isAlive() ) {    // åªè¦çº¿ç¨‹è¿˜æ²¡åœ
+                Running = false;    // ç½®è¿è¡ŒçŠ¶æ€ä¸ºåœæ­¢
+                EventLooper.interrupt();    // åˆåµé†’(>_<)
+            }
+            EventLooper = null;
+            WorkLine = null;    // æ“¦å±è‚¡æ“ä½œ
+        }
+    }
 }
 
 /**
- * AsyncTask½á¹¹Ìå
- * Òì²½ÈÎÎñµÄÔØÌå
+ * AsyncTaskç»“æ„ä½“
+ * å¼‚æ­¥ä»»åŠ¡çš„è½½ä½“
  * @author JimmyLiu
  * @version 1.1
  */
 class AsyncTask {
-	Object object; String methodName; Object[] arguments;
-	/**
-	 * AsyncTask
-	 * ¹¹Ôìº¯Êı
-	 * @param Object object ÒªÖ´ĞĞµÄ¶ÔÏóÒıÓÃ
-	 * @param String methodName ÒªÖ´ĞĞµÄ·½·¨Ãû
-	 * @param Object... arguments Òª´«µİµÄ²ÎÊı
-	 */
-	public AsyncTask( Object object, String methodName, Object... arguments ) {
-		this.object = object; this.methodName = methodName; this.arguments = arguments;
-	}
-	/**
-	 * Run
-	 * Ö´ĞĞ³ĞÔØµÄÈÎÎñ£¬ÀûÓÃJavaµÄ·´Éä»úÖÆ
-	 * @param Throwable err = null Òª½ÓÊÕÒì³£ÀàµÄ±äÁ¿£¬¿ÉÑ¡
-	 * @return void
-	 * @throws Throwable Å×³ö»Øµ÷º¯ÊıÖĞ·¢ÉúµÄÒì³£»òÕß£¬°üÀ¨µ«²»ÏŞÓÚ
-	 *  - ·½·¨ÎŞ·¨µ÷ÓÃ£ºNoSuchMethodException¡¢NullPointerException¡¢SecurityException
-	 *  - ³¢ÊÔµ÷ÓÃÊ±µÄ´íÎó£ºNullPointerException£¬IllegalAccessException£¬IllegalArgumentException£¬ExceptionInInitializerError
-	 */
-	public void Run(Throwable err) throws Throwable {
-		Class c = object.getClass();
-		Class[] argTypes = new Class[arguments.length];
-		try {
-			for ( int i=0; i<arguments.length; i++ ) {
-				argTypes[i] = arguments[i].getClass();    // ÖğÒ»»ñÈ¡Ã¿¸ö²ÎÊıµÄÀàĞÍ
-			}
-			Method m = c.getMethod(methodName, argTypes);    // Ñ°ÕÒÆ¥ÅäµÄ·½·¨
-			try {
-				m.invoke(object, arguments);    // ³¢ÊÔÖ´ĞĞ
-			}
-			catch (InvocationTargetException e) {    // Èç¹û»Øµ÷º¯Êı±¾ÉíÅ×³öÒì³£
-				throw e.getTargetException();    // Ôò»ñÈ¡²¢Å×³öÔ´Òì³£
-			}
-		} catch (Throwable e) {
-			//e.printStackTrace();    // ÕâÊ±ÆäÊµÄã¿ÉÒÔ×·×Ù¶ÑÕ»
-			if ( err != null) err = e; 
-			throw e;    // ÔÙ´ÎÅ×³ö
-		}
-	}
-	public void Run() throws Throwable {
-		Run(null);
-	}
+    Object object; String methodName; Object[] arguments;
+    /**
+     * AsyncTask
+     * æ„é€ å‡½æ•°
+     * @param Object object è¦æ‰§è¡Œçš„å¯¹è±¡å¼•ç”¨
+     * @param String methodName è¦æ‰§è¡Œçš„æ–¹æ³•å
+     * @param Object... arguments è¦ä¼ é€’çš„å‚æ•°
+     */
+    public AsyncTask( Object object, String methodName, Object... arguments ) {
+        this.object = object; this.methodName = methodName; this.arguments = arguments;
+    }
+    /**
+     * Run
+     * æ‰§è¡Œæ‰¿è½½çš„ä»»åŠ¡ï¼Œåˆ©ç”¨Javaçš„åå°„æœºåˆ¶
+     * @param Throwable err = null è¦æ¥æ”¶å¼‚å¸¸ç±»çš„å˜é‡ï¼Œå¯é€‰
+     * @return void
+     * @throws Throwable æŠ›å‡ºå›è°ƒå‡½æ•°ä¸­å‘ç”Ÿçš„å¼‚å¸¸æˆ–è€…ï¼ŒåŒ…æ‹¬ä½†ä¸é™äº
+     *  - æ–¹æ³•æ— æ³•è°ƒç”¨ï¼šNoSuchMethodExceptionã€NullPointerExceptionã€SecurityException
+     *  - å°è¯•è°ƒç”¨æ—¶çš„é”™è¯¯ï¼šNullPointerExceptionï¼ŒIllegalAccessExceptionï¼ŒIllegalArgumentExceptionï¼ŒExceptionInInitializerError
+     */
+    public void Run(Throwable err) throws Throwable {
+        Class c = object.getClass();
+        Class[] argTypes = new Class[arguments.length];
+        try {
+            for ( int i=0; i<arguments.length; i++ ) {
+                argTypes[i] = arguments[i].getClass();    // é€ä¸€è·å–æ¯ä¸ªå‚æ•°çš„ç±»å‹
+            }
+            Method m = c.getMethod(methodName, argTypes);    // å¯»æ‰¾åŒ¹é…çš„æ–¹æ³•
+            try {
+                m.invoke(object, arguments);    // å°è¯•æ‰§è¡Œ
+            }
+            catch (InvocationTargetException e) {    // å¦‚æœå›è°ƒå‡½æ•°æœ¬èº«æŠ›å‡ºå¼‚å¸¸
+                throw e.getTargetException();    // åˆ™è·å–å¹¶æŠ›å‡ºæºå¼‚å¸¸
+            }
+        } catch (Throwable e) {
+            //e.printStackTrace();    // è¿™æ—¶å…¶å®ä½ å¯ä»¥è¿½è¸ªå †æ ˆ
+            if ( err != null) err = e; 
+            throw e;    // å†æ¬¡æŠ›å‡º
+        }
+    }
+    public void Run() throws Throwable {
+        Run(null);
+    }
 }
