@@ -21,7 +21,11 @@
         }
     }
     public int getRow()  { return _x; }
-    public int getFile() { return _y; }
+    /**
+     * Method getFile() is Deprecated, use getColumn() instead.
+     */
+    @Deprecated public int getFile() { return _y; }
+    public int getColumn() { return _y; }
     public boolean equals(SquareCoord sc)
     {
       return (_x == sc.getRow() && _y == sc.getFile());

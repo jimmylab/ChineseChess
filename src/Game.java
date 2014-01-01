@@ -1,6 +1,7 @@
 import	java.util.*;
+import	java.io.*;
 
-public class Game
+public class Game implements Serializable
 {
   static final String legalChars = "RHEAKCPrheakcp";
   public static final int BOARD_WIDTH  =  9;
@@ -15,8 +16,10 @@ public class Game
   protected char	toMove;
   protected boolean reverse;
 
-  protected Vector<GameObserver> observers;
-  String captures = "";
+  transient protected Vector<GameObserver> observers;
+  @Deprecated String captures = "";
+  Stack<StepRecord> records;
+  Stack<StepRecord> redo;
 
   /**
    * Creates a game with the default position. */
@@ -32,6 +35,8 @@ public class Game
       {
         System.out.println(e.getMessage());
       }
+    records = new Stack<StepRecord>();
+    redo = new Stack<StepRecord>();
   }
 
   /**
@@ -194,24 +199,79 @@ public class Game
     if ((toMove == BLUE && Character.isUpperCase(piece))) return false;
 
     Vector legalDestinations = possibleMoves(origin, true);
-    for (Enumeration e = legalDestinations.elements(); e.hasMoreElements();)
-      {
+    for (Enumeration e = legalDestinations.elements(); !legalMove && e.hasMoreElements();)
+      {    // 遍历所有可能的落子位置
         Destination possible = (Destination)e.nextElement();
         if (possible.algCoord().compareTo(destin.toString()) == 0)
-          {
-            if (board[destin.getRow()][destin.getFile()] != ' ')
-              captures += board[destin.getRow()][destin.getFile()];
+          {    // 如果落子位置合法
+              StepRecord r;
+            if (board[destin.getRow()][destin.getFile()] != ' ') {    // 如果这个终点上已有棋子
+              captures += board[destin.getRow()][destin.getFile()];    // 加入捕捉列表
+              r = new StepRecord(moveText, board[destin.getRow()][destin.getColumn()]);
+            } else {
+                r = new StepRecord(moveText);
+            }
             board[origin.getRow()][origin.getFile()] = ' ';
-            board[destin.getRow()][destin.getFile()] = piece;
-            toMove ^= TURNSWITCH;
-            notifyObservers(moveText);
+            board[destin.getRow()][destin.getFile()] = piece;    // 吃子，或者正式落子
+            toMove ^= TURNSWITCH;    // 现在该另一方走棋
+            notifyObservers(moveText); // 通知万能的主，一直都在观察整个棋盘的BoardView类
             checkForMate();
-            return true;
+            records.push(r);
+            while(!redo.empty()) { redo.pop(); }
+            legalMove = true;
           }
       }
-    return false;
+    operationMenuFlush();
+    return legalMove;
   }
-  public String getCaptures() { return captures; }
+  public boolean forceMove(StepRecord record, boolean redo)
+  {
+    SquareCoord origin = new SquareCoord(record.getOrigin());
+    SquareCoord destin = new SquareCoord(record.getDestin());
+    if (origin.equals(destin)) {return false;} // don't mess with non-moves.
+    char piece = pieceAtCoord(origin);
+    char capt = record.getCapture();
+    if ( redo ) {    // 重做
+        //if (board[destin.getRow()][destin.getFile()] != ' ')
+            //captures += board[destin.getRow()][destin.getFile()];
+        board[origin.getRow()][origin.getColumn()] = ' ';
+    } else {    // 悔棋
+        board[origin.getRow()][origin.getColumn()] = capt;
+    }
+    board[destin.getRow()][destin.getColumn()] = piece;
+    toMove ^= TURNSWITCH;
+    if (!redo)
+        notifyObservers();
+    else
+        notifyObservers(record.moveText());
+    checkForMate();
+    return true;
+  }
+  public boolean revert()
+  {
+      if (records.empty()) return false;
+      StepRecord r = records.pop();
+      forceMove(r, false);
+      r.Invert();
+      redo.push(r);
+      operationMenuFlush();
+      return true;
+  }
+  public boolean redo()
+  {
+      if (redo.empty()) return false;
+      StepRecord r = redo.pop();
+      forceMove(r, true);
+      r.Invert();
+      records.push(r);
+      operationMenuFlush();
+      return true;
+  }
+  void operationMenuFlush() {
+      ChineseChess.app.menuRevert.setEnabled(!records.empty());
+      ChineseChess.app.menuRedo.setEnabled(!redo.empty());
+  }
+  @Deprecated public String getCaptures() { return captures; }
   private void checkForMate()
   {
     short mate = MATE_STALE;
