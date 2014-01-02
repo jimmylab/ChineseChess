@@ -148,14 +148,14 @@ class ChineseChessCtrl extends WindowAdapter implements ActionListener
             FileOutputStream out = new FileOutputStream(path);
             ObjectOutputStream serialization = new ObjectOutputStream(out);
             int redoTimes = 0;
-            for (; BoardView.defaultBoardView().game.redo(); redoTimes++){System.out.println("counting redo times");}
+            for (; BoardView.defaultBoardView().game.redo(); redoTimes++){}
             serialization.writeInt(redoTimes);
-            while(BoardView.defaultBoardView().game.revert()){System.out.println("reverting");}
+            while(BoardView.defaultBoardView().game.revert()){}
             serialization.writeObject(BoardView.defaultBoardView().game.redo);
             serialization.close(); out.close();
 
             // 还原格局    
-            while(BoardView.defaultBoardView().game.redo()){System.out.println("redoing");}
+            while(BoardView.defaultBoardView().game.redo()){}
             for (; redoTimes>0; BoardView.defaultBoardView().game.revert(), redoTimes--){}
             
             JOptionPane.showMessageDialog(mainFrame, "Successfully saved \""+path+'"');
@@ -185,8 +185,7 @@ class ChineseChessCtrl extends WindowAdapter implements ActionListener
             BoardView.defaultBoardView().setGame(game);
             BoardView.defaultBoardView().setColor('r');
             while(!records.empty()) {
-                game.move(records.peek().moveText());
-                System.out.println(records.pop().moveText());
+                game.move(records.pop().moveText());
             }
             for (; redoTimes>0; game.revert(), redoTimes--){}
             JOptionPane.showMessageDialog(mainFrame, "Successfully Open \""+path+'"');

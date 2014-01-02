@@ -1,7 +1,6 @@
 import	java.util.*;
-import	java.io.*;
 
-public class Game implements Serializable
+public class Game
 {
   static final String legalChars = "RHEAKCPrheakcp";
   public static final int BOARD_WIDTH  =  9;
@@ -16,7 +15,7 @@ public class Game implements Serializable
   protected char	toMove;
   protected boolean reverse;
 
-  transient protected Vector<GameObserver> observers;
+  protected Vector<GameObserver> observers;
   @Deprecated String captures = "";
   protected Stack<StepRecord> records;
   protected Stack<StepRecord> redo;

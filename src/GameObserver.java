@@ -1,5 +1,4 @@
-import java.io.*;
-public interface GameObserver extends Serializable
+public interface GameObserver
 {
   public void newPosition(String fen);
   public void newMove(String move);
