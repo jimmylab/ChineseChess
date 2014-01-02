@@ -18,8 +18,8 @@ public class Game implements Serializable
 
   transient protected Vector<GameObserver> observers;
   @Deprecated String captures = "";
-  Stack<StepRecord> records;
-  Stack<StepRecord> redo;
+  protected Stack<StepRecord> records;
+  protected Stack<StepRecord> redo;
 
   /**
    * Creates a game with the default position. */

@@ -3,6 +3,7 @@ import javax.swing.filechooser.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.Stack;
 
 public class ChineseChess
 {
@@ -27,14 +28,14 @@ public class ChineseChess
     menu.add(item);
     
     KeyStroke shift_n = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.SHIFT_MASK);
-    item = new JMenuItem("New From File");
-    item.setActionCommand("NEW_FROM_FILE");
+    item = new JMenuItem("Load Game");
+    item.setActionCommand("LOAD");
     item.setAccelerator(shift_n);
     item.addActionListener(control);
     menu.add(item);
     
     menu.addSeparator();
-    KeyStroke ctrl_s = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK);
+    KeyStroke ctrl_s = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK);
     item = new JMenuItem("Save");
     item.setActionCommand("SAVE");
     item.setAccelerator(ctrl_s);
@@ -85,6 +86,8 @@ public class ChineseChess
     constrs.gridwidth = constrs.gridheight = GridBagConstraints.REMAINDER;
     constrs.weighty = 1.0;
     mainFrame.setSize(320, 400);
+    mainFrame.setLocationRelativeTo(null);
+    mainFrame.setMinimumSize(new Dimension(320,400));
 
     mainFrame.addWindowListener(control);
   }
@@ -144,13 +147,52 @@ class ChineseChessCtrl extends WindowAdapter implements ActionListener
         try {
             FileOutputStream out = new FileOutputStream(path);
             ObjectOutputStream serialization = new ObjectOutputStream(out);
-            serialization.writeObject(BoardView.defaultBoardView().game);
-            out.close();
-            serialization.close();
+            int redoTimes = 0;
+            for (; BoardView.defaultBoardView().game.redo(); redoTimes++){System.out.println("counting redo times");}
+            serialization.writeInt(redoTimes);
+            while(BoardView.defaultBoardView().game.revert()){System.out.println("reverting");}
+            serialization.writeObject(BoardView.defaultBoardView().game.redo);
+            serialization.close(); out.close();
+
+            // 还原格局    
+            while(BoardView.defaultBoardView().game.redo()){System.out.println("redoing");}
+            for (; redoTimes>0; BoardView.defaultBoardView().game.revert(), redoTimes--){}
+            
             JOptionPane.showMessageDialog(mainFrame, "Successfully saved \""+path+'"');
         } catch (Throwable e) {
             JOptionPane.showMessageDialog(mainFrame, 
                     "Failure occurred while saving the game!", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    if (event.getActionCommand().compareTo("LOAD") == 0) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter( new FileNameExtensionFilter("Chinese Chess File (*.chess)", "chess") );
+        chooser.setDialogTitle("Load Game...");
+        chooser.setDialogType(JFileChooser.OPEN_DIALOG | JFileChooser.FILES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.showDialog(null, null);
+        File target = chooser.getSelectedFile();
+        String path = target.getAbsolutePath();
+        try {
+            FileInputStream in = new FileInputStream(path);
+            ObjectInputStream deserialization = new ObjectInputStream(in);
+            int redoTimes = deserialization.readInt();
+            Stack<StepRecord> records = (Stack<StepRecord>)deserialization.readObject();
+            deserialization.close(); in.close();
+            
+            Game game = new Game();
+            BoardView.defaultBoardView().setGame(game);
+            BoardView.defaultBoardView().setColor('r');
+            while(!records.empty()) {
+                game.move(records.peek().moveText());
+                System.out.println(records.pop().moveText());
+            }
+            for (; redoTimes>0; game.revert(), redoTimes--){}
+            JOptionPane.showMessageDialog(mainFrame, "Successfully Open \""+path+'"');
+        } catch (Throwable e) {
+            JOptionPane.showMessageDialog(mainFrame, 
+                    "Failure occurred while loading the game!", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }

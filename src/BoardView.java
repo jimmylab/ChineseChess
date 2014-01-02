@@ -42,20 +42,20 @@ class BoardView extends JPanel implements GameObserver
     setPanelCoords(reverse);
 
     pieceImages = new Hashtable<String,Image>();
-    pieceImages.put("P", (new ImageIcon("pieces/rsoldier.png").getImage()));
-    pieceImages.put("p", (new ImageIcon("pieces/bsoldier.png").getImage()));
-    pieceImages.put("R", (new ImageIcon("pieces/rchariot.png").getImage()));
-    pieceImages.put("r", (new ImageIcon("pieces/bchariot.png").getImage()));
-    pieceImages.put("H", (new ImageIcon("pieces/rhorse.png").getImage()));
-    pieceImages.put("h", (new ImageIcon("pieces/bhorse.png").getImage()));
-    pieceImages.put("E", (new ImageIcon("pieces/relephant.png").getImage()));
-    pieceImages.put("e", (new ImageIcon("pieces/belephant.png").getImage()));
-    pieceImages.put("A", (new ImageIcon("pieces/rmandarin.png").getImage()));
-    pieceImages.put("a", (new ImageIcon("pieces/bmandarin.png").getImage()));
-    pieceImages.put("K", (new ImageIcon("pieces/rgeneral.png").getImage()));
-    pieceImages.put("k", (new ImageIcon("pieces/bgeneral.png").getImage()));
-    pieceImages.put("C", (new ImageIcon("pieces/rcannon.png").getImage()));
-    pieceImages.put("c", (new ImageIcon("pieces/bcannon.png").getImage()));
+    pieceImages.put("P", (new ImageIcon(getClass().getResource("pieces/rsoldier.png")).getImage()));
+    pieceImages.put("p", (new ImageIcon(getClass().getResource("pieces/bsoldier.png")).getImage()));
+    pieceImages.put("R", (new ImageIcon(getClass().getResource("pieces/rchariot.png")).getImage()));
+    pieceImages.put("r", (new ImageIcon(getClass().getResource("pieces/bchariot.png")).getImage()));
+    pieceImages.put("H", (new ImageIcon(getClass().getResource("pieces/rhorse.png")).getImage()));
+    pieceImages.put("h", (new ImageIcon(getClass().getResource("pieces/bhorse.png")).getImage()));
+    pieceImages.put("E", (new ImageIcon(getClass().getResource("pieces/relephant.png")).getImage()));
+    pieceImages.put("e", (new ImageIcon(getClass().getResource("pieces/belephant.png")).getImage()));
+    pieceImages.put("A", (new ImageIcon(getClass().getResource("pieces/rmandarin.png")).getImage()));
+    pieceImages.put("a", (new ImageIcon(getClass().getResource("pieces/bmandarin.png")).getImage()));
+    pieceImages.put("K", (new ImageIcon(getClass().getResource("pieces/rgeneral.png")).getImage()));
+    pieceImages.put("k", (new ImageIcon(getClass().getResource("pieces/bgeneral.png")).getImage()));
+    pieceImages.put("C", (new ImageIcon(getClass().getResource("pieces/rcannon.png")).getImage()));
+    pieceImages.put("c", (new ImageIcon(getClass().getResource("pieces/bcannon.png")).getImage()));
 
   }
   public void setBoardColor(Color color)
@@ -71,35 +71,35 @@ class BoardView extends JPanel implements GameObserver
   private void setGrid()
   {
     Toolkit tk = Toolkit.getDefaultToolkit();
-    Image northWestCorner = tk.createImage("board_images/top_left.png");
-    Image northEastCorner = tk.createImage("board_images/top_right.png");
-    Image southEastCorner = tk.createImage("board_images/bottom_right.png");
-    Image southWestCorner = tk.createImage("board_images/bottom_left.png");
-    Image north = tk.createImage("board_images/top_side.png");
-    Image east  = tk.createImage("board_images/right_side.png");
-    Image eastStart = tk.createImage("board_images/right_start.png");
-    Image south = tk.createImage("board_images/bottom_side.png");
-    Image west = tk.createImage("board_images/left_side.png");
-    Image westStart = tk.createImage("board_images/left_start.png");
-    Image northBank = tk.createImage("board_images/river_north.png");
-    Image southBank = tk.createImage("board_images/river_south.png");
+    Image northWestCorner = tk.createImage(getClass().getResource("board_images/top_left.png"));
+    Image northEastCorner = tk.createImage(getClass().getResource("board_images/top_right.png"));
+    Image southEastCorner = tk.createImage(getClass().getResource("board_images/bottom_right.png"));
+    Image southWestCorner = tk.createImage(getClass().getResource("board_images/bottom_left.png"));
+    Image north = tk.createImage(getClass().getResource("board_images/top_side.png"));
+    Image east  = tk.createImage(getClass().getResource("board_images/right_side.png"));
+    Image eastStart = tk.createImage(getClass().getResource("board_images/right_start.png"));
+    Image south = tk.createImage(getClass().getResource("board_images/bottom_side.png"));
+    Image west = tk.createImage(getClass().getResource("board_images/left_side.png"));
+    Image westStart = tk.createImage(getClass().getResource("board_images/left_start.png"));
+    Image northBank = tk.createImage(getClass().getResource("board_images/river_north.png"));
+    Image southBank = tk.createImage(getClass().getResource("board_images/river_south.png"));
 
-    Image center = tk.createImage("board_images/cross.png");
-    Image centSt = tk.createImage("board_images/cross_start.png");
+    Image center = tk.createImage(getClass().getResource("board_images/cross.png"));
+    Image centSt = tk.createImage(getClass().getResource("board_images/cross_start.png"));
 
     // North Palace
-    Image northPalaceNW = tk.createImage("board_images/north_palace_nw.png");
-    Image northPalaceNE = tk.createImage("board_images/north_palace_ne.png");
-    Image northPalaceSE = tk.createImage("board_images/north_palace_se.png");
-    Image northPalaceSW = tk.createImage("board_images/north_palace_sw.png");
+    Image northPalaceNW = tk.createImage(getClass().getResource("board_images/north_palace_nw.png"));
+    Image northPalaceNE = tk.createImage(getClass().getResource("board_images/north_palace_ne.png"));
+    Image northPalaceSE = tk.createImage(getClass().getResource("board_images/north_palace_se.png"));
+    Image northPalaceSW = tk.createImage(getClass().getResource("board_images/north_palace_sw.png"));
 
-    Image palaceCenter = tk.createImage("board_images/palace_center.png"); // change!!
+    Image palaceCenter = tk.createImage(getClass().getResource("board_images/palace_center.png")); // change!!
 
     // SouthPalace
-    Image southPalaceNW = tk.createImage("board_images/south_palace_nw.png");
-    Image southPalaceNE = tk.createImage("board_images/south_palace_ne.png");
-    Image southPalaceSE = tk.createImage("board_images/south_palace_se.png");
-    Image southPalaceSW = tk.createImage("board_images/south_palace_sw.png");
+    Image southPalaceNW = tk.createImage(getClass().getResource("board_images/south_palace_nw.png"));
+    Image southPalaceNE = tk.createImage(getClass().getResource("board_images/south_palace_ne.png"));
+    Image southPalaceSE = tk.createImage(getClass().getResource("board_images/south_palace_se.png"));
+    Image southPalaceSW = tk.createImage(getClass().getResource("board_images/south_palace_sw.png"));
 
     for (int i = 0; i < BOARD_HEIGHT; i++)
       {
